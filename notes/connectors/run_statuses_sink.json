@@ -1,0 +1,20 @@
+{
+    "name": "run_statuses_sink",
+    "config": {
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "connection.url": "jdbc:postgresql://postgres-db:5432/drboson",
+        "connection.user": "darko",
+        "connection.password": "darko",
+        "topics": "run_statuses",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "table.name.format": "run",
+        "insert.mode": "update",
+        "pk.mode": "record_value",
+        "pk.fields": "id",
+        "transforms": "renameField, removeField",
+        "transforms.renameField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.renameField.renames": "run_id:id",
+        "transforms.removeField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.removeField.blacklist": "project_id"
+    }
+}

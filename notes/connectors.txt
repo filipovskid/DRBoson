@@ -1,0 +1,64 @@
+CREATE SINK CONNECTOR run_statuses_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_statuses',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'run',
+    'insert.mode'         = 'update',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'transforms'          = 'renameField, removeField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.renameField.renames' = 'run_id:id', 
+    'transforms.removeField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.removeField.blacklist' = 'project_id'
+  );
+
+
+curl -X POST "http://localhost:8083/connectors/RUN_STATUSES_SINK/restart"
+curl -X POST http://localhost:8083/connectors/RUN_STATUSES_SINK/tasks/0/restart
+curl -s "http://localhost:8083/connectors/RUN_STATUSES_SINK/status"
+
+
+CREATE SINK CONNECTOR run_files_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_files',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'files',
+    'insert.mode'         = 'insert',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'transforms'          = 'renameField, removeField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.renameField.renames' = 'file_id:id,file_name:name,file_key:location', 
+    'transforms.removeField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.removeField.blacklist' = 'project_id'
+  );
+
+CREATE SINK CONNECTOR run_logs_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_logs',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'metric_logs',
+    'insert.mode'         = 'insert',
+    'pk.mode'             = 'record_key',
+    'pk.fields'           = 'id'
+  );
+
+curl -s "http://localhost:8083/connectors/RUN_LOGS_SINK/status"
+curl -X POST http://localhost:8083/connectors/RUN_LOGS_SINK/tasks/0/restart
+
+
+SCHEMA:
+curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" http://localhost:8081/subjects
+curl -X DELETE http://localhost:8081/subjects/Kafka-value
+
+

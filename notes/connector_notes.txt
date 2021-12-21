@@ -1,0 +1,132 @@
+CREATE SINK CONNECTOR run_statuses_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_statuses',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'run',
+    'insert.mode'         = 'update',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'transforms'          = 'renameField, removeField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.renameField.renames' = 'run_id:id', 
+    'transforms.removeField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.removeField.blacklist' = 'project_id'
+  );
+
+
+curl -X POST "http://localhost:8083/connectors/RUN_STATUSES_SINK/restart"
+curl -X POST http://localhost:8083/connectors/RUN_STATUSES_SINK/tasks/0/restart
+curl -s "http://localhost:8083/connectors/RUN_STATUSES_SINK/status"
+
+
+CREATE SINK CONNECTOR run_files_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_files',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'files',
+    'insert.mode'         = 'insert',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'transforms'          = 'renameField, removeField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.renameField.renames' = 'file_id:id,file_name:name,file_key:location', 
+    'transforms.removeField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value',
+    'transforms.removeField.blacklist' = 'project_id'
+  );
+
+CREATE SINK CONNECTOR run_logs_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'run_logs',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'metric_logs',
+    'insert.mode'         = 'insert',
+    'pk.mode'             = 'record_key',
+    'pk.fields'           = 'id'
+  );
+
+curl -s "http://localhost:8083/connectors/RUN_LOGS_SINK/status"
+curl -X POST http://localhost:8083/connectors/RUN_LOGS_SINK/tasks/0/restart
+
+
+CREATE SINK CONNECTOR job_status_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'job_status',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'dataset_job',
+    'insert.mode'         = 'update',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'fields.whitelist'    = 'id,status', 
+    'transforms'          = 'renameField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value', 
+    'transforms.renameField.renames' = 'job_id:id'
+  );
+
+curl -X POST http://localhost:8083/connectors/JOB_STATUS_SINK/tasks/0/restart
+
+
+CREATE SINK CONNECTOR rdf_ready_state_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'job_status',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'dataset',
+    'insert.mode'         = 'update',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'fields.whitelist'    = 'id,rdf_dataset_location,rdf_ready_status', 
+    'transforms'          = 'filter,flatten,renameField',
+    'transforms.filter.type' = 'io.confluent.connect.transforms.Filter$Value', 
+    'transforms.filter.filter.condition' = '$[?(@.job_type == "RDF_READY_STORAGE")]', 
+    'transforms.filter.filter.type' = 'include', 
+    'transforms.filter.missing.or.null.behavior' = 'fail', 
+    'transforms.flatten.type' = 'org.apache.kafka.connect.transforms.Flatten$Value', 
+    'transforms.flatten.delimiter' = '_', 
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value', 
+    'transforms.renameField.renames' = 'dataset_id:id,job_state_storage_location:rdf_dataset_location,status:rdf_ready_status'
+  );
+
+
+SCHEMA:
+curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" http://localhost:8081/subjects
+curl -X DELETE http://localhost:8081/subjects/job_status-value
+
+CREATE SINK CONNECTOR dataset_create_sink WITH (
+    'connector.class'     = 'io.confluent.connect.jdbc.JdbcSinkConnector',
+    'connection.url'      = 'jdbc:postgresql://postgres-db:5432/drboson',
+    'connection.user'     = 'darko',
+    'connection.password' = 'darko',
+    'topics'              = 'transform_datasets',
+    'key.converter'       = 'org.apache.kafka.connect.storage.StringConverter',
+    'table.name.format'   = 'dataset',
+    'insert.mode'         = 'insert',
+    'pk.mode'             = 'record_value',
+    'pk.fields'           = 'id', 
+    'transforms'          = 'renameField',
+    'transforms.renameField.type' = 'org.apache.kafka.connect.transforms.ReplaceField$Value', 
+    'transforms.renameField.renames' = 'dataset_id:id'
+  );
+
+  kafka-consumer-groups \
+    --bootstrap-server kafka:29092 \
+    --group connect-DATASET_CREATE_SINK \
+    --reset-offsets \
+    --topic transform_datasets \
+    --to-offset 1 \
+    --execute
+
+curl -X POST http://localhost:8083/connectors/dataset_create_sink/tasks/0/restart

@@ -1,0 +1,18 @@
+{
+    "name": "dataset_create_sink",
+    "config": {
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "connection.url": "jdbc:postgresql://postgres-db:5432/drboson",
+        "connection.user": "darko",
+        "connection.password": "darko",
+        "topics": "transform_datasets",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "table.name.format": "dataset",
+        "insert.mode": "insert",
+        "pk.mode": "record_value",
+        "pk.fields": "id",
+        "transforms": "renameField",
+        "transforms.renameField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.renameField.renames": "dataset_id:id"
+    }
+}

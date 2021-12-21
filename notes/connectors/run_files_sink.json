@@ -1,0 +1,20 @@
+{
+    "name": "run_files_sink",
+    "config": {
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "connection.url": "jdbc:postgresql://postgres-db:5432/drboson",
+        "connection.user": "darko",
+        "connection.password": "darko",
+        "topics": "run_files",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "table.name.format": "files",
+        "insert.mode": "insert",
+        "pk.mode": "record_value",
+        "pk.fields": "id",
+        "transforms": "renameField, removeField",
+        "transforms.renameField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.renameField.renames": "file_id:id,file_name:name,file_key:location",
+        "transforms.removeField.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.removeField.blacklist": "project_id"
+    }
+}
